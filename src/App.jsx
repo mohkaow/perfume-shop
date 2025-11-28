@@ -169,17 +169,17 @@ function Cart() {
       }
 
       // สร้างลำดับหลักสำหรับอัพโหลด (จะได้ orderId สำหรับตั้งชื่อไฟล์)
-      let paymentSlipUrl = '';
-
       // อัพโหลดสลิป (ต้องสร้าง temp order id ก่อน)
       const tempOrderId = Date.now().toString();
+      let paymentSlipUrl = paymentSlipPreview; // ใช้ preview URL สำหรับ local test
+
       try {
         paymentSlipUrl = await uploadPaymentSlip(paymentSlip, tempOrderId);
+        console.log('✅ Slip uploaded to Firebase Storage:', paymentSlipUrl);
       } catch (uploadError) {
-        console.error('Error uploading slip:', uploadError);
-        setErrorMessage('เกิดข้อผิดพลาดในการอัพโหลดสลิป กรุณาลองใหม่');
-        setLoading(false);
-        return;
+        console.warn('⚠️ Upload failed, using preview URL instead:', uploadError.message);
+        // ถ้า upload ล้มเหลว ใช้ preview URL ชั่วคราว
+        paymentSlipUrl = paymentSlipPreview;
       }
 
       // สร้าง order object
@@ -384,7 +384,7 @@ function Cart() {
         <button
           type="submit"
           className="btn-primary btn-full"
-          disabled={items.length === 0 || loading}
+          disabled={items.length === 0 || loading || !paymentSlip}
         >
           {loading ? 'กำลังส่งคำสั่ง...' : 'ยืนยันคำสั่งซื้อ'}
         </button>

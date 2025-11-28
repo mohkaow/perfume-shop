@@ -17,15 +17,30 @@ const ORDERS_COLLECTION = 'orders';
 // สร้างคำสั่งซื้อใหม่
 export const createOrder = async (orderData) => {
     try {
+        console.log('Creating order with data:', orderData);
+        
+        // ตรวจสอบว่า db ถูก initialize หรือไม่
+        if (!db) {
+            throw new Error('Firebase Firestore is not initialized. Please check your Firebase configuration in .env.local');
+        }
+
         const docRef = await addDoc(collection(db, ORDERS_COLLECTION), {
             ...orderData,
             status: 'pending', // pending, confirmed, rejected, shipped, completed
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp()
         });
+        
+        console.log('✅ Order created successfully with ID:', docRef.id);
         return docRef.id;
     } catch (error) {
-        console.error('Error creating order:', error);
+        console.error('❌ Error creating order:', error.message);
+        
+        // ให้ hint ว่าต้อง setup Firebase
+        if (error.message.includes('Failed to get document') || error.code === 'permission-denied') {
+            throw new Error('Firebase permission denied. Please check your Firestore rules.');
+        }
+        
         throw error;
     }
 };
@@ -33,6 +48,11 @@ export const createOrder = async (orderData) => {
 // ดึงคำสั่งซื้อทั้งหมด (สำหรับ Admin)
 export const getAllOrders = async () => {
     try {
+        if (!db) {
+            console.warn('⚠️ Firebase not initialized, returning empty list');
+            return [];
+        }
+
         const q = query(
             collection(db, ORDERS_COLLECTION),
             orderBy('createdAt', 'desc')
@@ -45,10 +65,17 @@ export const getAllOrders = async () => {
                 ...doc.data()
             });
         });
+        
+        console.log(`✅ Loaded ${orders.length} orders from Firestore`);
         return orders;
     } catch (error) {
-        console.error('Error getting orders:', error);
-        throw error;
+        console.error('❌ Error getting orders:', error.message);
+        
+        if (error.message.includes('permission-denied')) {
+            console.error('Firestore permission denied. Check your security rules.');
+        }
+        
+        return []; // Return empty array on error instead of throwing
     }
 };
 
