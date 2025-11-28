@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { getAllOrders } from '../services/orderService';
+import { getAllProducts } from '../services/productService';
 import ProductManagement from '../components/admin/ProductManagement';
 import OrderManagement from '../components/admin/OrderManagement';
 import '../admin-styles.css';
@@ -18,21 +20,41 @@ export default function AdminDashboard() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        // โหลด stats (ในอนาคตจะเชื่อมต่อกับ backend)
+        // โหลด stats จาก Firebase
         loadStats();
     }, []);
 
     const loadStats = async () => {
         try {
-            // Placeholder - จะอัปเดตเมื่อมี backend service
+            // ดึงข้อมูล products และ orders จาก Firebase
+            const products = await getAllProducts();
+            const orders = await getAllOrders();
+
+            // คำนวณสถิติ
+            const totalProducts = products.length;
+            const totalOrders = orders.length;
+            const pendingOrders = orders.filter(order => order.status === 'pending').length;
+            
+            // คำนวณรายได้ทั้งหมด (จากคำสั่งซื้อที่ยืนยันแล้ว)
+            const totalRevenue = orders
+                .filter(order => order.status !== 'pending' && order.status !== 'rejected')
+                .reduce((sum, order) => sum + (order.totalPrice || 0), 0);
+
+            setStats({
+                totalProducts,
+                totalOrders,
+                totalRevenue,
+                pendingOrders
+            });
+        } catch (error) {
+            console.error('Error loading stats:', error);
+            // ถ้าดึงข้อมูลไม่ได้ก็ใช้ค่า default
             setStats({
                 totalProducts: 0,
                 totalOrders: 0,
                 totalRevenue: 0,
                 pendingOrders: 0
             });
-        } catch (error) {
-            console.error('Error loading stats:', error);
         }
     };
 
