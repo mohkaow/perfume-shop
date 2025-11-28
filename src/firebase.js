@@ -5,7 +5,7 @@ import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
-// Firebase config จาก Firebase Console
+// Firebase config จาก Firebase Console หรือ Environment Variables
 const firebaseConfig = {
     apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyDxkrnwLa1Z2sOvAsgE31mpsVq3KCU0QVo",
     authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "perfume-shop-82ac7.firebaseapp.com",
@@ -15,6 +15,14 @@ const firebaseConfig = {
     appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:659051379188:web:50683af4416d9e8c02e1a1",
     measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-7JC9L2WLEG"
 };
+
+// ตรวจสอบว่ามี API Key หรือไม่
+if (!firebaseConfig.apiKey) {
+    console.error(
+        "Firebase API Key is not configured. " +
+        "Please set VITE_FIREBASE_API_KEY in your .env.local file or check firebase.js"
+    );
+}
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
