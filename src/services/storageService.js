@@ -31,39 +31,61 @@ export const uploadProductImage = async (file) => {
 // อัปโหลดสลิปโอนเงิน
 export const uploadPaymentSlip = async (file, orderId) => {
     try {
+        console.log('📤 Starting payment slip upload...', {
+            fileName: file.name,
+            fileSize: file.size,
+            fileType: file.type,
+            orderId: orderId
+        });
+
         // สร้างชื่อไฟล์ที่ไม่ซ้ำกัน
         const timestamp = Date.now();
         const fileName = `payment-slips/${orderId}_${timestamp}_${file.name}`;
         
         // ตรวจสอบว่า storage initialize หรือไม่
         if (!storage) {
-            console.warn('⚠️ Firebase Storage not initialized. Using mock URL for testing.');
-            // ส่ง mock URL ชั่วคราว (สำหรับ test โดยไม่ต้อง Firebase)
-            return `mock://storage/${fileName}`;
+            console.error('❌ Firebase Storage is not initialized!');
+            console.error('⚠️ Check your .env.local for:');
+            console.error('   VITE_FIREBASE_STORAGE_BUCKET=...');
+            throw new Error('Firebase Storage not initialized. Please check .env.local');
         }
+
+        console.log('📁 Upload path:', fileName);
 
         const storageRef = ref(storage, fileName);
 
         // อัปโหลดไฟล์
+        console.log('⏳ Uploading file to Firebase Storage...');
         const snapshot = await uploadBytes(storageRef, file);
+        console.log('✅ File uploaded to Firebase');
 
         // ดึง URL สำหรับดาวน์โหลด
+        console.log('🔗 Getting download URL...');
         const downloadURL = await getDownloadURL(snapshot.ref);
 
-        console.log('✅ Payment slip uploaded successfully');
+        console.log('✅ Payment slip uploaded successfully!');
+        console.log('   URL:', downloadURL);
         return downloadURL;
     } catch (error) {
-        console.error('❌ Error uploading payment slip:', error.message);
+        console.error('❌ Error uploading payment slip:', {
+            message: error.message,
+            code: error.code,
+            orderId: orderId
+        });
         
-        if (error.message.includes('permission-denied')) {
-            console.error('Firebase Storage permission denied. Check your storage rules.');
+        if (error.message.includes('permission-denied') || error.code === 'storage/unauthorized') {
+            console.error('🔒 Storage permission denied!');
+            console.error('   Check Firebase Console → Storage → Rules');
+            console.error('   Rules should allow: allow write: if true;');
         }
         
-        // ให้ fallback ไปใช้ mock URL ชั่วคราว
-        console.warn('⚠️ Falling back to mock URL for testing');
-        const timestamp = Date.now();
-        const fileName = `payment-slips/${orderId}_${timestamp}_${file.name}`;
-        return `mock://storage/${fileName}`;
+        if (error.message.includes('not initialized')) {
+            console.error('⚠️ Firebase Storage not initialized');
+            console.error('   Check .env.local has VITE_FIREBASE_STORAGE_BUCKET');
+        }
+        
+        // ไม่ใช้ fallback - ให้ error ขึ้นจริงๆ เพื่อให้ user รู้ว่ามีปัญหา
+        throw new Error(`Payment slip upload failed: ${error.message}`);
     }
 };
 

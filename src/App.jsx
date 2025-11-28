@@ -179,18 +179,20 @@ function Cart({ onClose }) {
         return;
       }
 
-      // สร้างลำดับหลักสำหรับอัพโหลด (จะได้ orderId สำหรับตั้งชื่อไฟล์)
-      // อัพโหลดสลิป (ต้องสร้าง temp order id ก่อน)
+      // สร้าง temp order id สำหรับตั้งชื่อไฟล์
       const tempOrderId = Date.now().toString();
-      let paymentSlipUrl = paymentSlipPreview; // ใช้ preview URL สำหรับ local test
+      let paymentSlipUrl = '';
 
       try {
+        // อัพโหลดสลิปไปยัง Firebase Storage
+        console.log('🔄 Uploading payment slip to Firebase Storage...');
         paymentSlipUrl = await uploadPaymentSlip(paymentSlip, tempOrderId);
-        console.log('✅ Slip uploaded to Firebase Storage:', paymentSlipUrl);
+        console.log('✅ Slip uploaded successfully to Firebase Storage');
       } catch (uploadError) {
-        console.warn('⚠️ Upload failed, using preview URL instead:', uploadError.message);
-        // ถ้า upload ล้มเหลว ใช้ preview URL ชั่วคราว
-        paymentSlipUrl = paymentSlipPreview;
+        console.error('❌ Payment slip upload failed:', uploadError.message);
+        setErrorMessage(`❌ ไม่สามารถอัพโหลดสลิปได้: ${uploadError.message}\n\nกรุณาตรวจสอบ:\n1. Internet connection\n2. ไฟล์เป็น JPG/PNG ไหม\n3. ไฟล์ไม่เกิน 5MB ไหม`);
+        setLoading(false);
+        return; // หยุดการส่งคำสั่ง
       }
 
       // สร้าง order object
