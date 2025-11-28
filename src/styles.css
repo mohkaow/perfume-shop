@@ -10,6 +10,16 @@
   background: linear-gradient(135deg, #f5f1e8 0%, #ede4d3 100%);
 }
 
+/* Animation for low stock warning */
+@keyframes pulse-warning {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
 body {
   margin: 0;
 }
@@ -122,6 +132,7 @@ body {
   overflow: hidden;
   background: linear-gradient(135deg, #fdfbf7 0%, #f5f1e8 100%);
   border-bottom: 1px solid #e8dcc8;
+  position: relative;
 }
 
 .product-image-wrapper img {
@@ -133,6 +144,47 @@ body {
 
 .product-card:hover .product-image-wrapper img {
   transform: scale(1.05);
+}
+
+/* Stock Badge */
+.stock-badge {
+  position: absolute;
+  top: 0.8rem;
+  right: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-family: system-ui, -apple-system, sans-serif;
+  backdrop-filter: blur(8px);
+  z-index: 5;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.stock-badge.in-stock {
+  background: rgba(76, 175, 80, 0.9);
+  color: #fff;
+  border: 1px solid rgba(76, 175, 80, 1);
+}
+
+.stock-badge.low-stock {
+  background: rgba(255, 193, 7, 0.9);
+  color: #fff;
+  border: 1px solid rgba(255, 193, 7, 1);
+  animation: pulse-warning 2s infinite;
+}
+
+.stock-badge.out-of-stock {
+  background: rgba(244, 67, 54, 0.9);
+  color: #fff;
+  border: 1px solid rgba(244, 67, 54, 1);
+}
+
+.stock-icon {
+  font-size: 1rem;
 }
 
 .product-body {
@@ -389,7 +441,37 @@ body {
 }
 
 .btn-primary:disabled {
-  opacity: 0.5;
+  opacity: 0.6;
+  background: linear-gradient(135deg, #999999 0%, #777777 100%);
+  color: #fdfbf7;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Wishlist Button */
+.btn-wishlist {
+  border: 2px solid #e91e63;
+  background: linear-gradient(135deg, #f06292 0%, #e91e63 100%);
+  color: #fdfbf7;
+  border-radius: 999px;
+  padding: 0.7rem 1.5rem;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(233, 30, 99, 0.3);
+  transition: all 0.3s ease;
+  font-family: system-ui, -apple-system, sans-serif;
+  white-space: nowrap;
+}
+
+.btn-wishlist:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(233, 30, 99, 0.4);
+}
+
+.btn-wishlist:disabled {
+  opacity: 0.7;
   cursor: not-allowed;
   transform: none;
 }

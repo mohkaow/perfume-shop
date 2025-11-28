@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
-import { products } from './data/products.js';
+import React, { useState, useEffect } from 'react';
 import { useCart } from './context/CartContext.jsx';
+import { CartProvider } from './context/CartContext.jsx';
 import { createOrder } from './services/orderService';
 import { uploadPaymentSlip, validateFileSize, validateFileType } from './services/storageService';
+import { decreaseProductStock, getAllProducts } from './services/productService';
+import { addToWishlist, checkWishlist, removeFromWishlist } from './services/wishlistService';
 import VersionBadge from './components/VersionBadge';
 
 function formatPriceTHB(amount) {
@@ -13,6 +15,51 @@ function formatPriceTHB(amount) {
 }
 
 export default function App() {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadProducts = async () => {
+      try {
+        const data = await getAllProducts();
+        setProducts(data);
+      } catch (error) {
+        console.error('Error loading products:', error);
+        alert('⚠️ ไม่สามารถโหลดสินค้าได้ กรุณารีเฟรชหน้า');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProducts();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="app">
+        <header className="app-header">
+          <div className="app-header-left">
+            <h1>Perfume Shop</h1>
+            <p>น้ำหอมคัดพิเศษ กลิ่นเป็นเอกลักษณ์ของแบรนด์คุณ</p>
+          </div>
+        </header>
+        <main className="layout">
+          <div style={{ textAlign: 'center', padding: '2rem' }}>
+            ⏳ กำลังโหลดสินค้า...
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  return (
+    <CartProvider products={products}>
+      <AppContent products={products} />
+    </CartProvider>
+  );
+}
+
+function AppContent({ products }) {
   const { totalItems } = useCart();
   const [showCart, setShowCart] = useState(false);
 
@@ -64,19 +111,70 @@ export default function App() {
 
 function ProductCard({ product }) {
   const { addItem } = useCart();
+  const [isWishlisted, setIsWishlisted] = useState(false);
+  const [wishlistLoading, setWishlistLoading] = useState(false);
 
   const handleAdd = () => {
-    addItem({
-      id: product.id,
-      name: product.name,
-      price: product.price
-    });
+    if (product.stock > 0) {
+      addItem({
+        id: product.id,
+        name: product.name,
+        price: product.price
+      });
+    }
   };
+
+  const handleAddToWishlist = async () => {
+    setWishlistLoading(true);
+    try {
+      const customerEmail = prompt('📧 กรุณาใส่อีเมล เพื่อรับแจ้งเตือนเมื่อมีสต๊อก:');
+      if (!customerEmail) {
+        setWishlistLoading(false);
+        return;
+      }
+
+      if (isWishlisted) {
+        setIsWishlisted(false);
+        alert('❌ ลบออกจากสำรองสต๊อกแล้ว');
+      } else {
+        await addToWishlist(product.id, product.name, product.image, customerEmail);
+        setIsWishlisted(true);
+        alert('✅ บันทึกการสำรองสต๊อก โปรดรอแจ้งเตือนเมื่อสต๊อกมีมา');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('⚠️ เกิดข้อผิดพลาด กรุณาลองใหม่');
+    } finally {
+      setWishlistLoading(false);
+    }
+  };
+
+  const isOutOfStock = product.stock === 0;
+  const isLowStock = product.stock > 0 && product.stock < 5;
 
   return (
     <article className="product-card">
       <div className="product-image-wrapper">
         <img src={product.image} alt={product.name} />
+        {/* Stock Badge */}
+        <div className={`stock-badge ${isOutOfStock ? 'out-of-stock' : isLowStock ? 'low-stock' : 'in-stock'}`}>
+          {isOutOfStock ? (
+            <>
+              <span className="stock-icon">❌</span>
+              <span className="stock-text">สินค้าหมด</span>
+            </>
+          ) : isLowStock ? (
+            <>
+              <span className="stock-icon">⚠️</span>
+              <span className="stock-text">เหลือ {product.stock} ชิ้น</span>
+            </>
+          ) : (
+            <>
+              <span className="stock-icon">📦</span>
+              <span className="stock-text">เหลือ {product.stock} ชิ้น</span>
+            </>
+          )}
+        </div>
       </div>
       <div className="product-body">
         <h2 className="product-name">{product.name}</h2>
@@ -89,9 +187,25 @@ function ProductCard({ product }) {
             </div>
             <div className="product-volume">{product.volume}</div>
           </div>
-          <button className="btn-primary" onClick={handleAdd}>
-            เพิ่มลงตะกร้า
-          </button>
+          {isOutOfStock ? (
+            <button 
+              className="btn-wishlist"
+              onClick={handleAddToWishlist}
+              disabled={wishlistLoading}
+              title="เพิ่มลงสำรองสต๊อก"
+            >
+              {wishlistLoading ? '⏳' : isWishlisted ? '❤️' : '🤍'} {isWishlisted ? 'สำรองแล้ว' : 'สำรองสต๊อก'}
+            </button>
+          ) : (
+            <button 
+              className="btn-primary" 
+              onClick={handleAdd}
+              disabled={isOutOfStock}
+              title={isOutOfStock ? "สินค้าหมด" : "เพิ่มลงตะกร้า"}
+            >
+              {isOutOfStock ? 'สินค้าหมด' : 'เพิ่มลงตะกร้า'}
+            </button>
+          )}
         </div>
       </div>
     </article>
@@ -223,6 +337,18 @@ function Cart({ onClose }) {
       const orderId = await createOrder(orderData);
 
       console.log('✅ Order created successfully:', orderId);
+
+      // ลดสต๊อกสินค้าในแต่ละรายการ
+      try {
+        console.log('🔄 Decreasing product stocks...');
+        for (const item of items) {
+          await decreaseProductStock(item.id, item.quantity);
+        }
+        console.log('✅ Product stocks updated successfully');
+      } catch (stockError) {
+        console.error('⚠️ Warning: Failed to update stock:', stockError);
+        // ไม่หยุดการทำงาน เพราะคำสั่งซื้อสำเร็จแล้ว
+      }
       
       // ส่วนนี้คืออื่นๆ ที่ต้องทำ
       setOrderSuccess(true);

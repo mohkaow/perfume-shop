@@ -168,6 +168,12 @@ export default function ProductManagement() {
                                 </th>
                                 <th
                                     className="sortable-header"
+                                    onClick={() => handleSort('stock')}
+                                >
+                                    สต๊อก{getSortIcon('stock')}
+                                </th>
+                                <th
+                                    className="sortable-header"
                                     onClick={() => handleSort('notes')}
                                 >
                                     กลิ่น{getSortIcon('notes')}
@@ -190,6 +196,21 @@ export default function ProductManagement() {
                                     </td>
                                     <td>฿{product.price?.toLocaleString('th-TH')}</td>
                                     <td>{product.volume}</td>
+                                    <td>
+                                        <div className={`stock-status ${product.stock > 0 ? 'in-stock' : 'out-of-stock'}`}>
+                                            {product.stock > 0 ? (
+                                                <>
+                                                    <span className="stock-icon">📦</span>
+                                                    <span>{product.stock} ชิ้น</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <span className="stock-icon">❌</span>
+                                                    <span>หมด</span>
+                                                </>
+                                            )}
+                                        </div>
+                                    </td>
                                     <td className="notes-cell">{product.notes}</td>
                                     <td>
                                         <div className="action-buttons">

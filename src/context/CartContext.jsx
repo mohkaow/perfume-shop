@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 
 const CartContext = createContext(null);
 
-export function CartProvider({ children }) {
+export function CartProvider({ children, products = [] }) {
   const [items, setItems] = useState(() => {
     try {
       const saved = window.localStorage.getItem('perfume_cart');
@@ -22,6 +22,13 @@ export function CartProvider({ children }) {
   }, [items]);
 
   const addItem = (product) => {
+    // ตรวจสอบสต๊อกจากข้อมูลสินค้า
+    const productData = products.find(p => p.id === product.id);
+    if (!productData || productData.stock <= 0) {
+      console.warn(`⚠️ Product ${product.id} is out of stock`);
+      return;
+    }
+
     setItems((prev) => {
       const existing = prev.find((i) => i.id === product.id);
       if (existing) {

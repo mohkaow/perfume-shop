@@ -418,8 +418,35 @@
 
 .notes-cell {
   font-size: 0.9rem;
-  color: #8b7355;
-  max-width: 200px;
+  color: #6b5744;
+}
+
+/* Stock Status Badge */
+.stock-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.8rem;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  width: fit-content;
+}
+
+.stock-status.in-stock {
+  background: rgba(76, 175, 80, 0.2);
+  color: #2e7d32;
+  border: 1px solid #4caf50;
+}
+
+.stock-status.out-of-stock {
+  background: rgba(244, 67, 54, 0.2);
+  color: #c62828;
+  border: 1px solid #f44336;
+}
+
+.stock-icon {
+  font-size: 1.1rem;
 }
 
 .action-buttons {

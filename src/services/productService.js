@@ -92,3 +92,43 @@ export const deleteProduct = async (productId) => {
         throw error;
     }
 };
+
+// อัปเดตสต๊อกสินค้า
+export const updateProductStock = async (productId, newStock) => {
+    try {
+        const docRef = doc(db, PRODUCTS_COLLECTION, productId);
+        await updateDoc(docRef, {
+            stock: newStock,
+            updatedAt: serverTimestamp()
+        });
+        return true;
+    } catch (error) {
+        console.error('Error updating product stock:', error);
+        throw error;
+    }
+};
+
+// ลดสต๊อกสินค้า (เมื่อมีการสั่งซื้อ)
+export const decreaseProductStock = async (productId, quantity = 1) => {
+    try {
+        const docRef = doc(db, PRODUCTS_COLLECTION, productId);
+        const docSnap = await getDoc(docRef);
+
+        if (!docSnap.exists()) {
+            throw new Error('Product not found');
+        }
+
+        const currentStock = docSnap.data().stock || 0;
+        const newStock = Math.max(0, currentStock - quantity);
+
+        await updateDoc(docRef, {
+            stock: newStock,
+            updatedAt: serverTimestamp()
+        });
+
+        return newStock;
+    } catch (error) {
+        console.error('Error decreasing product stock:', error);
+        throw error;
+    }
+};

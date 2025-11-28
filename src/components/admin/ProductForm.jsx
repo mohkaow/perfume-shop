@@ -12,7 +12,8 @@ export default function ProductForm({ product, onClose }) {
         price: product?.price || '',
         volume: product?.volume || '',
         notes: product?.notes || '',
-        image: product?.image || ''
+        image: product?.image || '',
+        stock: product?.stock || ''
     });
 
     const [imageFile, setImageFile] = useState(null);
@@ -84,7 +85,8 @@ export default function ProductForm({ product, onClose }) {
                 price: parseFloat(formData.price),
                 volume: formData.volume,
                 notes: formData.notes,
-                image: imageUrl
+                image: imageUrl,
+                stock: parseInt(formData.stock) || 0
             };
 
             if (isEditing) {
@@ -175,6 +177,22 @@ export default function ProductForm({ product, onClose }) {
                                 value={formData.volume}
                                 onChange={handleChange}
                                 placeholder="100 ml"
+                                required
+                                disabled={loading}
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label htmlFor="stock">สต๊อก (ชิ้น) *</label>
+                            <input
+                                type="number"
+                                id="stock"
+                                name="stock"
+                                value={formData.stock}
+                                onChange={handleChange}
+                                placeholder="0"
+                                min="0"
+                                step="1"
                                 required
                                 disabled={loading}
                             />
