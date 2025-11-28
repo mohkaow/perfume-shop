@@ -13,7 +13,7 @@ function formatPriceTHB(amount) {
 
 export default function App() {
   const { totalItems } = useCart();
-  const [showCart, setShowCart] = useState(true);
+  const [showCart, setShowCart] = useState(false);
 
   return (
     <div className="app">
@@ -24,9 +24,10 @@ export default function App() {
         </div>
         <button
           className="cart-toggle-btn"
-          onClick={() => setShowCart((v) => !v)}
+          onClick={() => setShowCart(true)}
+          title="เปิดตะกร้าสินค้า"
         >
-          ตะกร้า ({totalItems})
+          🛒 ตะกร้า ({totalItems})
         </button>
       </header>
 
@@ -36,13 +37,23 @@ export default function App() {
             <ProductCard key={p.id} product={p} />
           ))}
         </section>
-
-        {showCart && (
-          <aside className="cart-panel">
-            <Cart />
-          </aside>
-        )}
       </main>
+
+      {/* Cart Modal */}
+      {showCart && (
+        <div className="cart-modal-overlay" onClick={() => setShowCart(false)}>
+          <div className="cart-modal" onClick={(e) => e.stopPropagation()}>
+            <button 
+              className="cart-modal-close" 
+              onClick={() => setShowCart(false)}
+              title="ปิดตะกร้า"
+            >
+              ✕
+            </button>
+            <Cart onClose={() => setShowCart(false)} />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -83,7 +94,7 @@ function ProductCard({ product }) {
   );
 }
 
-function Cart() {
+function Cart({ onClose }) {
   const {
     items,
     removeItem,
@@ -225,6 +236,7 @@ function Cart() {
       setTimeout(() => {
         alert(`✅ คำสั่งซื้อหมายเลข ${orderId.slice(0, 8)} ส่งไปเรียบร้อย\n\nรอการตรวจสอบจากทีมแอดมิน`);
         setOrderSuccess(false);
+        onClose(); // ปิด modal หลังจากส่งคำสั่งเรียบร้อย
       }, 500);
 
     } catch (error) {
