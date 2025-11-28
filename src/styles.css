@@ -391,3 +391,141 @@ body {
 .btn-full {
   width: 100%;
 }
+
+/* Message Alerts */
+
+.cart-error {
+  background-color: #f5c5ba;
+  color: #6b2c1f;
+  padding: 0.8rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+  border-left: 4px solid #c97a5f;
+  font-size: 0.95rem;
+  font-family: system-ui, -apple-system, sans-serif;
+  animation: slideDown 0.3s ease;
+}
+
+.cart-success {
+  background-color: #c6e8bd;
+  color: #2d5a2d;
+  padding: 0.8rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+  border-left: 4px solid #7cb342;
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-family: system-ui, -apple-system, sans-serif;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.checkout-form input:disabled,
+.checkout-form textarea:disabled {
+  opacity: 0.7;
+  background-color: #f5f1e8;
+  cursor: not-allowed;
+}
+
+/* Payment Slip Upload Styles */
+.payment-slip-upload {
+  margin: 1.5rem 0;
+}
+
+.slip-input {
+  display: none;
+}
+
+.slip-input-label {
+  display: block;
+  padding: 1.5rem;
+  border: 2px dashed #d4af37;
+  border-radius: 0.5rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background-color: rgba(212, 175, 55, 0.03);
+}
+
+.slip-input-label:hover {
+  border-color: #c9a961;
+  background-color: rgba(212, 175, 55, 0.08);
+  transform: translateY(-2px);
+}
+
+.slip-input-text {
+  display: block;
+  color: #8b7355;
+  font-weight: 500;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.slip-preview {
+  position: relative;
+  margin-top: 1rem;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  background-color: #f5f1e8;
+  padding: 0.5rem;
+}
+
+.slip-preview img {
+  max-width: 100%;
+  max-height: 300px;
+  display: block;
+  margin: 0 auto;
+  border-radius: 0.3rem;
+}
+
+.slip-remove-btn {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  border: none;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  font-weight: bold;
+  transition: all 0.2s ease;
+}
+
+.slip-remove-btn:hover:not(:disabled) {
+  background-color: rgba(201, 80, 70, 0.9);
+  transform: scale(1.1);
+}
+
+.slip-remove-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.slip-hint {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: #8b7355;
+  font-family: system-ui, -apple-system, sans-serif;
+  text-align: center;
+}
+

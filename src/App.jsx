@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { products } from './data/products.js';
 import { useCart } from './context/CartContext.jsx';
+import { createOrder } from './services/orderService';
+import { uploadPaymentSlip, validateFileSize, validateFileType } from './services/storageService';
 
 function formatPriceTHB(amount) {
   return amount.toLocaleString('th-TH', {
@@ -97,45 +99,140 @@ function Cart() {
     note: ''
   });
 
+  const [loading, setLoading] = useState(false);
+  const [orderSuccess, setOrderSuccess] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [paymentSlip, setPaymentSlip] = useState(null);
+  const [paymentSlipPreview, setPaymentSlipPreview] = useState('');
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setCustomer((prev) => ({ ...prev, [name]: value }));
+    setErrorMessage('');
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-
-    if (!customer.name || !customer.phone || !customer.address) {
-      alert('กรุณากรอกชื่อ เบอร์โทร และที่อยู่ ให้ครบก่อนจ้า');
+  const handleSlipChange = (e) => {
+    const file = e.target.files?.[0];
+    
+    if (!file) {
+      setPaymentSlip(null);
+      setPaymentSlipPreview('');
       return;
     }
 
-    if (items.length === 0) {
-      alert('ตะกร้ายังว่างอยู่เลย ยังไม่มีสินค้านะ');
+    // ตรวจสอบประเภทไฟล์
+    if (!validateFileType(file)) {
+      setErrorMessage('กรุณาอัพโหลดไฟล์รูปภาพเท่านั้น (JPG, PNG, WebP)');
       return;
     }
 
-    const orderPayload = {
-      customer,
-      items,
-      totalPrice,
-      createdAt: new Date().toISOString()
+    // ตรวจสอบขนาดไฟล์
+    if (!validateFileSize(file, 5)) {
+      setErrorMessage('ไฟล์รูปภาพต้องไม่เกิน 5MB');
+      return;
+    }
+
+    setPaymentSlip(file);
+    setErrorMessage('');
+
+    // สร้าง preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPaymentSlipPreview(reader.result);
     };
+    reader.readAsDataURL(file);
+  };
 
-    // จุดนี้คือที่ต่อออกไป Backend / Google Apps Script / LINE Notify
-    console.log('ORDER_PAYLOAD', orderPayload);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setErrorMessage('');
+    setLoading(true);
 
-    alert(
-      'รับคำสั่งซื้อเรียบร้อย (ตัวอย่าง)\n\nตอนนี้ยังไม่ยิงไป backend นะ ไปต่อเองได้ที่ handleSubmit ใน App.jsx'
-    );
+    try {
+      // ตรวจสอบข้อมูลพื้นฐาน
+      if (!customer.name || !customer.phone || !customer.address) {
+        setErrorMessage('กรุณากรอกชื่อ เบอร์โทร และที่อยู่ ให้ครบ');
+        setLoading(false);
+        return;
+      }
 
-    clearCart();
-    setCustomer({
-      name: '',
-      phone: '',
-      address: '',
-      note: ''
-    });
+      if (items.length === 0) {
+        setErrorMessage('ตะกร้ายังว่างอยู่ ไม่มีสินค้านะ');
+        setLoading(false);
+        return;
+      }
+
+      if (!paymentSlip) {
+        setErrorMessage('กรุณาแนบสลิปโอนเงินด้วย');
+        setLoading(false);
+        return;
+      }
+
+      // สร้างลำดับหลักสำหรับอัพโหลด (จะได้ orderId สำหรับตั้งชื่อไฟล์)
+      let paymentSlipUrl = '';
+
+      // อัพโหลดสลิป (ต้องสร้าง temp order id ก่อน)
+      const tempOrderId = Date.now().toString();
+      try {
+        paymentSlipUrl = await uploadPaymentSlip(paymentSlip, tempOrderId);
+      } catch (uploadError) {
+        console.error('Error uploading slip:', uploadError);
+        setErrorMessage('เกิดข้อผิดพลาดในการอัพโหลดสลิป กรุณาลองใหม่');
+        setLoading(false);
+        return;
+      }
+
+      // สร้าง order object
+      const orderData = {
+        customer: {
+          name: customer.name,
+          phone: customer.phone,
+          address: customer.address,
+          note: customer.note || ''
+        },
+        items: items.map(item => ({
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity
+        })),
+        totalPrice: totalPrice,
+        paymentSlipUrl: paymentSlipUrl,
+        paymentApproved: false,
+        status: 'pending'
+      };
+
+      // ส่ง order ไป Firebase
+      const orderId = await createOrder(orderData);
+
+      console.log('✅ Order created successfully:', orderId);
+      
+      // ส่วนนี้คืออื่นๆ ที่ต้องทำ
+      setOrderSuccess(true);
+      
+      // Clear cart และ form
+      clearCart();
+      setCustomer({
+        name: '',
+        phone: '',
+        address: '',
+        note: ''
+      });
+      setPaymentSlip(null);
+      setPaymentSlipPreview('');
+
+      // แสดงข้อความสำเร็จ
+      setTimeout(() => {
+        alert(`✅ คำสั่งซื้อหมายเลข ${orderId.slice(0, 8)} ส่งไปเรียบร้อย\n\nรอการตรวจสอบจากทีมแอดมิน`);
+        setOrderSuccess(false);
+      }, 500);
+
+    } catch (error) {
+      console.error('❌ Error creating order:', error);
+      setErrorMessage(`เกิดข้อผิดพลาด: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -164,11 +261,13 @@ function Cart() {
                       onChange={(e) =>
                         updateQuantity(item.id, e.target.value)
                       }
+                      disabled={loading}
                     />
                   </label>
                   <button
                     className="cart-item-remove"
                     onClick={() => removeItem(item.id)}
+                    disabled={loading}
                   >
                     ลบ
                   </button>
@@ -186,6 +285,19 @@ function Cart() {
       <hr className="cart-divider" />
 
       <h3>ข้อมูลผู้สั่งซื้อ</h3>
+
+      {errorMessage && (
+        <div className="cart-error">
+          ⚠️ {errorMessage}
+        </div>
+      )}
+
+      {orderSuccess && (
+        <div className="cart-success">
+          ✅ คำสั่งซื้อส่งเรียบร้อย! กรุณารอการยืนยันจากแอดมิน
+        </div>
+      )}
+
       <form className="checkout-form" onSubmit={handleSubmit}>
         <label>
           ชื่อ-นามสกุล
@@ -195,6 +307,7 @@ function Cart() {
             value={customer.name}
             onChange={handleChange}
             placeholder="เช่น สมชาย น้ำหอมดี"
+            disabled={loading}
           />
         </label>
         <label>
@@ -205,6 +318,7 @@ function Cart() {
             value={customer.phone}
             onChange={handleChange}
             placeholder="เช่น 081-234-5678"
+            disabled={loading}
           />
         </label>
         <label>
@@ -214,6 +328,7 @@ function Cart() {
             value={customer.address}
             onChange={handleChange}
             placeholder="บ้านเลขที่ / แขวง / เขต / จังหวัด / รหัสไปรษณีย์"
+            disabled={loading}
           />
         </label>
         <label>
@@ -223,21 +338,60 @@ function Cart() {
             value={customer.note}
             onChange={handleChange}
             placeholder="เช่น ขอเป็นกลิ่นอ่อน ๆ / แพ้แอลกอฮอล์แรง"
+            disabled={loading}
           />
         </label>
+
+        <hr className="cart-divider" />
+        <h3>📸 แนบสลิปโอนเงิน</h3>
+
+        <div className="payment-slip-upload">
+          <label className="slip-input-label">
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleSlipChange}
+              disabled={loading}
+              className="slip-input"
+            />
+            <span className="slip-input-text">
+              {paymentSlip ? '✅ เลือกไฟล์แล้ว' : '📁 เลือกไฟล์รูปสลิป'}
+            </span>
+          </label>
+
+          {paymentSlipPreview && (
+            <div className="slip-preview">
+              <img src={paymentSlipPreview} alt="Payment slip preview" />
+              <button
+                type="button"
+                className="slip-remove-btn"
+                onClick={() => {
+                  setPaymentSlip(null);
+                  setPaymentSlipPreview('');
+                }}
+                disabled={loading}
+              >
+                ✕ ลบ
+              </button>
+            </div>
+          )}
+
+          <p className="slip-hint">
+            💡 อัพโหลดสลิปโอนเงิน (JPG, PNG หรือ WebP ไม่เกิน 5MB)
+          </p>
+        </div>
 
         <button
           type="submit"
           className="btn-primary btn-full"
-          disabled={items.length === 0}
+          disabled={items.length === 0 || loading}
         >
-          ยืนยันคำสั่งซื้อ (ยังไม่ตัดบัตร แค่ส่งข้อมูล)
+          {loading ? 'กำลังส่งคำสั่ง...' : 'ยืนยันคำสั่งซื้อ'}
         </button>
       </form>
 
       <p className="checkout-note">
-        ⚠ ตอนนี้ยังไม่มี Payment Gateway นะ ไปต่อเองได้ที่ฟังก์ชัน
-        <code> handleSubmit </code> ในไฟล์ <code> App.jsx </code>
+        📌 คำสั่งซื้อจะเก็บไว้ในระบบ เรียกรอการตรวจสอบจากทีมแอดมิน
       </p>
     </div>
   );
