@@ -2,30 +2,32 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Helper function - ตรวจสอบว่าเป็น admin หรือไม่
-    function isAdmin() {
-      return request.auth != null;
-    }
-    
     // Products Collection
     match /products/{productId} {
       // อนุญาตให้ทุกคนอ่านได้ (สำหรับลูกค้า)
       allow read: if true;
       
-      // เฉพาะ admin ที่ login แล้วเท่านั้นที่เขียนได้
-      allow create, update, delete: if isAdmin();
+      // เฉพาะ login แล้วเท่านั้นที่เขียนได้
+      allow create, update, delete: if request.auth != null;
     }
     
     // Orders Collection
     match /orders/{orderId} {
-      // เฉพาะ admin ที่อ่านได้ทั้งหมด
-      allow read: if isAdmin();
+      // ทุกคน (login หรือไม่ login) สามารถอ่านได้ (สำหรับ testing)
+      // ⚠️ ใช้เฉพาะ dev เท่านั้น! ต้องเปลี่ยนเมื่อ production
+      allow read: if true;
       
       // ลูกค้าสามารถสร้างคำสั่งซื้อได้ (ไม่ต้อง login)
       allow create: if true;
       
-      // เฉพาะ admin ที่แก้ไขและลบได้
-      allow update, delete: if isAdmin();
+      // เฉพาะ login แล้วเท่านั้นที่แก้ไขและลบได้
+      allow update, delete: if request.auth != null;
+    }
+    
+    // Admins Collection
+    match /admins/{uid} {
+      allow read: if true;
+      allow write: if false;
     }
   }
 }
