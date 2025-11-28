@@ -1,6 +1,7 @@
 {
   "name": "perfume-shop",
-  "version": "1.0.0",
+  "version": "1.1.0",
+  "description": "น้ำหอมคัดพิเศษ กลิ่นเป็นเอกลักษณ์ของแบรนด์คุณ",
   "private": true,
   "scripts": {
     "dev": "vite",
