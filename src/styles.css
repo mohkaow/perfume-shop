@@ -34,6 +34,12 @@ body {
   z-index: 10;
 }
 
+.app-header-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
 .app-header-left h1 {
   margin: 0;
   font-size: 2rem;
@@ -667,3 +673,31 @@ body {
   }
 }
 
+/* Version Badge */
+.version-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.8rem;
+  background: rgba(212, 175, 55, 0.1);
+  border: 1px solid #d4af37;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #8b7355;
+  cursor: default;
+  transition: all 0.2s ease;
+}
+
+.version-badge:hover {
+  background: rgba(212, 175, 55, 0.15);
+  border-color: #c9a961;
+}
+
+.version-badge .version-icon {
+  font-size: 0.85rem;
+}
+
+.version-badge .version-text {
+  letter-spacing: 0.5px;
+}

@@ -6,6 +6,7 @@ import { getAllOrders } from '../services/orderService';
 import { getAllProducts } from '../services/productService';
 import ProductManagement from '../components/admin/ProductManagement';
 import OrderManagement from '../components/admin/OrderManagement';
+import VersionBadge from '../components/VersionBadge';
 import '../admin-styles.css';
 
 export default function AdminDashboard() {
@@ -74,10 +75,11 @@ export default function AdminDashboard() {
             <header className="admin-header">
                 <div className="admin-header-content">
                     <div className="admin-header-left">
-                        <h1>�️ Perfume Shop Admin</h1>
+                        <h1>🧴️ Perfume Shop Admin</h1>
                         <p className="admin-subtitle">ระบบจัดการร้านน้ำหอมออนไลน์</p>
                     </div>
                     <div className="admin-header-right">
+                        <VersionBadge />
                         <div className="admin-user-info">
                             <span className="user-email">{currentUser?.email}</span>
                             <span className="user-badge">👤 Admin</span>

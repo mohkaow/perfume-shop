@@ -3,6 +3,7 @@ import { products } from './data/products.js';
 import { useCart } from './context/CartContext.jsx';
 import { createOrder } from './services/orderService';
 import { uploadPaymentSlip, validateFileSize, validateFileType } from './services/storageService';
+import VersionBadge from './components/VersionBadge';
 
 function formatPriceTHB(amount) {
   return amount.toLocaleString('th-TH', {
@@ -22,13 +23,16 @@ export default function App() {
           <h1>Perfume Shop</h1>
           <p>น้ำหอมคัดพิเศษ กลิ่นเป็นเอกลักษณ์ของแบรนด์คุณ</p>
         </div>
-        <button
-          className="cart-toggle-btn"
-          onClick={() => setShowCart(true)}
-          title="เปิดตะกร้าสินค้า"
-        >
-          🛒 ตะกร้า ({totalItems})
-        </button>
+        <div className="app-header-right">
+          <VersionBadge />
+          <button
+            className="cart-toggle-btn"
+            onClick={() => setShowCart(true)}
+            title="เปิดตะกร้าสินค้า"
+          >
+            🛒 ตะกร้า ({totalItems})
+          </button>
+        </div>
       </header>
 
       <main className="layout">

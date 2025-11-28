@@ -53,6 +53,16 @@
   gap: 1.5rem;
 }
 
+.admin-header-right .version-badge {
+  background: rgba(212, 175, 55, 0.2);
+  border-color: #d4af37;
+  color: #d4af37;
+}
+
+.admin-header-right .version-badge:hover {
+  background: rgba(212, 175, 55, 0.3);
+}
+
 .admin-user-info {
   display: flex;
   align-items: center;
